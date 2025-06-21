@@ -7,7 +7,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import pet_projects.daybyday.ui.habits.HabitScreen
@@ -20,8 +19,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             DayByDayTheme {
                 Scaffold(modifier = Modifier
-                    .fillMaxSize()
-                    .wrapContentHeight())
+                    .fillMaxSize())
                 { innerPadding ->
                     Log.i("InnerPadding", innerPadding.toString())
                     HabitScreen(modifier = Modifier.padding(innerPadding))

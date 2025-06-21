@@ -1,5 +1,6 @@
 package pet_projects.daybyday.ui.habits
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,5 +22,16 @@ class HabitsViewModel : ViewModel() {
             Habit(id = 4, name = "4", desc = "4"),
             Habit(id = 5, name = "5", desc = "5"))
         _uiState.value = habitsList
+    }
+
+    fun onItemClick(habit: Habit) {
+        Log.d("OnItemClicked", "True")
+        val id = habit.id
+        val habits = uiState.value
+        for (habit in habits) {
+            if (id == habit.id)
+            habit.isCompleted = !habit.isCompleted
+        }
+        Log.d("IsCompleted", "${habit.isCompleted}")
     }
 }
