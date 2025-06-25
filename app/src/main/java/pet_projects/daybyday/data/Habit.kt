@@ -4,5 +4,5 @@ data class Habit(
     val id: Int,
     val name: String,
     val desc: String,
-    var isCompleted: Boolean = false
+    val isCompleted: Boolean = false
 )
