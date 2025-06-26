@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <style name="Theme.DayByDay" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="CustomCalendar" parent="@android:style/Theme.Material.Light.Dialog.Alert">
+        <item name="android:colorAccent">#FF6200EE</item>
+        <item name="android:textColorPrimaryInverse">#FFFFFFFF</item>
+    </style>
 </resources>

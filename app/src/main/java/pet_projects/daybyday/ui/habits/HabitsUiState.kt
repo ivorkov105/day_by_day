@@ -1,6 +1,6 @@
 package pet_projects.daybyday.ui.habits
 
-import pet_projects.daybyday.data.Habit
+import pet_projects.daybyday.database.data.Habit
 
 sealed interface HabitsUiState {
     data object Loading: HabitsUiState

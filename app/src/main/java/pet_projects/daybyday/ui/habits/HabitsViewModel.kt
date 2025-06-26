@@ -1,55 +1,122 @@
 package pet_projects.daybyday.ui.habits
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import pet_projects.daybyday.data.Habit
+import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import pet_projects.daybyday.repositories.HabitRepository
+import pet_projects.daybyday.database.data.Habit
+import java.time.LocalDate
+import java.time.LocalTime
+import javax.inject.Inject
 
-class HabitsViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow<HabitsUiState>(HabitsUiState.Loading)
-    val uiState: StateFlow<HabitsUiState> = _uiState.asStateFlow()
+@HiltViewModel
+class HabitsViewModel @Inject constructor(
+    private val repository: HabitRepository
+) : ViewModel() {
 
-    init {
-        loadHabits()
+    private val _selectedDate = MutableStateFlow(LocalDate.now())
+    val selectedDate: StateFlow<LocalDate> = _selectedDate.asStateFlow()
+
+    private val _viewingHabitDetails = MutableStateFlow<Habit?>(null)
+    val viewingHabitDetails: StateFlow<Habit?> = _viewingHabitDetails.asStateFlow()
+
+
+    private val _habitTime = MutableStateFlow(LocalTime.now())
+    val habitTime: StateFlow<LocalTime> = _habitTime.asStateFlow()
+
+    fun onTimeSelected(hour: Int, minute: Int) {
+        _habitTime.value = LocalTime.of(hour, minute)
     }
 
-    fun loadHabits() {
-        _uiState.value = HabitsUiState.Loading
-        try {
-            val habitsList = listOf(Habit(id = 1, name = "1", desc = "1"),
-                Habit(id = 2, name = "2", desc = "2"),
-                Habit(id = 3, name = "3", desc = "3", isCompleted = true),
-                Habit(id = 4, name = "4", desc = "4"),
-                Habit(id = 5, name = "5", desc = "5"))
-            if (habitsList.isEmpty()) {
-                _uiState.value = HabitsUiState.Empty
-            } else {
-                _uiState.value = HabitsUiState.Success(habitsList)
-            }
-        } catch (e: Exception) {
-            _uiState.value = HabitsUiState.Error("Ошибка ${e.message}")
-        }
-    }
+    private val _isAddDialogShown = MutableStateFlow(false)
+    val isAddDialogShown: StateFlow<Boolean> = _isAddDialogShown.asStateFlow()
 
-    fun onItemClick(clickedHabit: Habit) {
-        Log.d("OnItemClicked", "True")
-        _uiState.update { currentState ->
-            when (currentState) {
-                is HabitsUiState.Success -> {
-                    val updatedHabits = currentState.habits.map { habit ->
-                        if (habit.id == clickedHabit.id)
-                            habit.copy(isCompleted = !habit.isCompleted)
-                        else
-                            habit
-                    }
-                    HabitsUiState.Success(updatedHabits)
+    private val _habitName = MutableStateFlow("")
+    val habitName: StateFlow<String> = _habitName.asStateFlow()
+
+    private val _habitDescription = MutableStateFlow("")
+    val habitDescription: StateFlow<String> = _habitDescription.asStateFlow()
+
+    private val _habitToDelete = MutableStateFlow<Habit?>(null)
+    val habitToDelete: StateFlow<Habit?> = _habitToDelete.asStateFlow()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val uiState: StateFlow<HabitsUiState> = _selectedDate
+        .flatMapLatest { date ->
+            repository.getHabitsForDate(date)
+                .map { habits ->
+                    if (habits.isEmpty()) HabitsUiState.Empty else HabitsUiState.Success(habits)
                 }
-                else -> currentState
-            }
         }
-        Log.d("IsCompleted", "${clickedHabit.isCompleted}")
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = HabitsUiState.Loading
+        )
+
+    fun onDateSelected(date: LocalDate) {
+        _selectedDate.value = date
+    }
+
+    fun onItemClick(habit: Habit) = viewModelScope.launch {
+        _viewingHabitDetails.value = habit
+    }
+
+    fun toggleHabitCompletion(habit: Habit) = viewModelScope.launch {
+        repository.update(habit.copy(isCompleted = !habit.isCompleted))
+        _viewingHabitDetails.update { it?.copy(isCompleted = !it.isCompleted) }
+    }
+
+    fun dismissHabitDetails() {
+        _viewingHabitDetails.value = null
+    }
+
+    fun showAddHabitDialog() {
+        _isAddDialogShown.value = true
+    }
+
+    fun dismissAddHabitDialog() {
+        _isAddDialogShown.value = false
+        _habitName.value = ""
+        _habitDescription.value = ""
+        _habitTime.value = LocalTime.now()
+    }
+
+    fun onNameChange(newName: String) {
+        _habitName.value = newName
+    }
+
+    fun onDescriptionChange(newDescription: String) {
+        _habitDescription.value = newDescription
+    }
+
+    fun saveNewHabit() = viewModelScope.launch {
+        if (_habitName.value.isBlank()) return@launch
+        val newHabit = Habit(
+            name = _habitName.value,
+            desc = _habitDescription.value,
+            date = _selectedDate.value,
+            time = _habitTime.value
+        )
+        repository.insert(newHabit)
+        dismissAddHabitDialog()
+    }
+
+    fun requestDeletion(habit: Habit) {
+        _habitToDelete.value = habit
+    }
+
+    fun dismissDeletion() {
+        _habitToDelete.value = null
+    }
+
+    fun confirmDeletion() = viewModelScope.launch {
+        _habitToDelete.value?.let { habitToRemove ->
+            repository.delete(habitToRemove)
+            dismissDeletion()
+        }
     }
 }
