@@ -1,8 +1,12 @@
 package pet_projects.daybyday
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import android.Manifest
+import android.os.Build
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +32,8 @@ import pet_projects.daybyday.ui.habits.TimePickerDialog
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        askNotificationPermission()
         setContent {
             DayByDayTheme {
                 val viewModel: HabitsViewModel = viewModel()
@@ -117,6 +123,22 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private val requestPermissionsLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted)
+            Toast.makeText(this@MainActivity, "Разрешение получено", Toast.LENGTH_LONG).show()
+        else
+            Toast.makeText(this@MainActivity, "Разрешение не получено", Toast.LENGTH_LONG).show()
+    }
+
+    fun askNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissionsLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            requestPermissionsLauncher.launch(Manifest.permission.USE_EXACT_ALARM)
         }
     }
 }

@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "pet_projects.daybyday"
-        minSdk = 34
+        minSdk = 32
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"

@@ -8,13 +8,15 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import pet_projects.daybyday.repositories.HabitRepository
 import pet_projects.daybyday.database.data.Habit
+import pet_projects.daybyday.util.schedulers.HabitScheduler
 import java.time.LocalDate
 import java.time.LocalTime
 import javax.inject.Inject
 
 @HiltViewModel
 class HabitsViewModel @Inject constructor(
-    private val repository: HabitRepository
+    private val repository: HabitRepository,
+    private val scheduler: HabitScheduler
 ) : ViewModel() {
 
     private val _selectedDate = MutableStateFlow(LocalDate.now())
@@ -102,6 +104,7 @@ class HabitsViewModel @Inject constructor(
             time = _habitTime.value
         )
         repository.insert(newHabit)
+        scheduler.schedule(newHabit)
         dismissAddHabitDialog()
     }
 
@@ -115,6 +118,7 @@ class HabitsViewModel @Inject constructor(
 
     fun confirmDeletion() = viewModelScope.launch {
         _habitToDelete.value?.let { habitToRemove ->
+            scheduler.cancel(habitToRemove)
             repository.delete(habitToRemove)
             dismissDeletion()
         }

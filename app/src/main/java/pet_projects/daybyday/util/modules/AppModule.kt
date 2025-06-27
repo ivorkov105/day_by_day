@@ -11,6 +11,8 @@ import android.content.Context
 import pet_projects.daybyday.database.daos.HabitDao
 import pet_projects.daybyday.repositories.HabitRepository
 import pet_projects.daybyday.repositories.HabitRepositoryImpl
+import pet_projects.daybyday.util.schedulers.HabitScheduler
+import pet_projects.daybyday.util.schedulers.HabitSchedulerImpl
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -30,5 +32,11 @@ class AppModule {
     @Singleton
     fun provideHabitRepository(habitDao: HabitDao): HabitRepository {
         return HabitRepositoryImpl(habitDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideHabitScheduler(@ApplicationContext context: Context): HabitScheduler {
+        return HabitSchedulerImpl(context)
     }
 }
